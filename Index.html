@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DC Metro Explorer</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background: #111827;
+        color: #fff;
+        padding: 12px 16px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .subtitle {
+        margin-top: 4px;
+        font-size: 13px;
+        opacity: 0.85;
+      }
+
+      #map {
+        flex: 1;
+        min-height: 52vh;
+      }
+
+      .panel {
+        padding: 12px 16px;
+        background: #fff;
+      }
+
+      .chips {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+      }
+
+      .chip {
+        border-radius: 999px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 10px;
+        text-align: center;
+      }
+
+      @media (min-width: 720px) {
+        h1 {
+          font-size: 22px;
+        }
+
+        .subtitle {
+          font-size: 14px;
+        }
+
+        #map {
+          min-height: 62vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header>
+        <h1>DC Metro Explorer</h1>
+        <div class="subtitle">Mobile-first Apps Script web app with a detailed DC-area metro map</div>
+      </header>
+      <section class="panel">
+        <div id="line-list" class="chips"></div>
+      </section>
+      <div id="map" aria-label="DC Metro map"></div>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const serverMapDataTemplate = "<?= mapDataEncoded ?>";
+      const serverMapData =
+        // In local/static previews, Apps Script template tags are not rendered and still contain "<?".
+        serverMapDataTemplate && !serverMapDataTemplate.includes("<?")
+          ? decodeURIComponent(serverMapDataTemplate)
+          : null;
+      const fallbackMapData = {
+        lines: [
+          {
+            name: "Red",
+            color: "#be1337",
+            stations: [
+              { name: "Shady Grove", lat: 39.1199, lng: -77.1647 },
+              { name: "Metro Center", lat: 38.8983, lng: -77.0281 },
+              { name: "Union Station", lat: 38.8971, lng: -77.0063 },
+              { name: "Glenmont", lat: 39.0617, lng: -77.0532 }
+            ]
+          }
+        ],
+        pointsOfInterest: []
+      };
+
+      const mapDataModel = (() => {
+        if (serverMapData) {
+          try {
+            return JSON.parse(serverMapData);
+          } catch (e) {
+            return fallbackMapData;
+          }
+        }
+        return fallbackMapData;
+      })();
+
+      const bounds = [];
+      const lineList = document.getElementById("line-list");
+
+      mapDataModel.lines.forEach((line) => {
+        const latLngs = line.stations.map((station) => {
+          const latLng = [station.lat, station.lng];
+          bounds.push(latLng);
+          return latLng;
+        });
+
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.style.backgroundColor = line.color;
+        chip.textContent = `${line.name} (${line.stations.length})`;
+        lineList.appendChild(chip);
+      });
+
+      mapDataModel.pointsOfInterest.forEach((poi) => {
+        const latLng = [poi.lat, poi.lng];
+        bounds.push(latLng);
+      });
+
+      if (window.L) {
+        const map = L.map("map", { zoomControl: true }).setView([38.9072, -77.0369], 10);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 18,
+          attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(map);
+
+        mapDataModel.lines.forEach((line) => {
+          const latLngs = line.stations.map((station) => {
+            const latLng = [station.lat, station.lng];
+            L.circleMarker(latLng, {
+              radius: 5,
+              color: line.color,
+              fillColor: line.color,
+              fillOpacity: 0.95,
+              weight: 2
+            })
+              .addTo(map)
+              .bindPopup(`<strong>${station.name}</strong><br>${line.name} Line`);
+            return latLng;
+          });
+
+          L.polyline(latLngs, {
+            color: line.color,
+            weight: 4,
+            opacity: 0.85
+          }).addTo(map);
+        });
+
+        mapDataModel.pointsOfInterest.forEach((poi) => {
+          L.marker([poi.lat, poi.lng])
+            .addTo(map)
+            .bindPopup(`<strong>${poi.name}</strong><br>${poi.category}`);
+        });
+
+        if (bounds.length > 2) {
+          map.fitBounds(bounds, { padding: [24, 24] });
+        }
+      } else {
+        const mapEl = document.getElementById("map");
+        mapEl.innerHTML = "";
+        mapEl.style.background = "#e5e7eb";
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 1000 700");
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("height", "100%");
+
+        const lats = bounds.map((b) => b[0]);
+        const lngs = bounds.map((b) => b[1]);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+        const minLng = Math.min(...lngs);
+        const maxLng = Math.max(...lngs);
+
+        const SVG_LEFT_PADDING = 50;
+        const SVG_BOTTOM = 650;
+        const SVG_DRAW_WIDTH = 900;
+        const SVG_DRAW_HEIGHT = 600;
+
+        const project = (lat, lng) => ({
+          x: SVG_LEFT_PADDING + ((lng - minLng) / (maxLng - minLng || 1)) * SVG_DRAW_WIDTH,
+          y: SVG_BOTTOM - ((lat - minLat) / (maxLat - minLat || 1)) * SVG_DRAW_HEIGHT
+        });
+
+        mapDataModel.lines.forEach((line) => {
+          const points = line.stations.map((station) => {
+            const p = project(station.lat, station.lng);
+            return `${p.x},${p.y}`;
+          });
+
+          const path = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          path.setAttribute("points", points.join(" "));
+          path.setAttribute("fill", "none");
+          path.setAttribute("stroke", line.color);
+          path.setAttribute("stroke-width", "6");
+          path.setAttribute("stroke-linecap", "round");
+          path.setAttribute("stroke-linejoin", "round");
+          svg.appendChild(path);
+
+          line.stations.forEach((station) => {
+            const p = project(station.lat, station.lng);
+            const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dot.setAttribute("cx", String(p.x));
+            dot.setAttribute("cy", String(p.y));
+            dot.setAttribute("r", "4");
+            dot.setAttribute("fill", line.color);
+            const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+            title.textContent = `${station.name} (${line.name})`;
+            dot.appendChild(title);
+            svg.appendChild(dot);
+          });
+        });
+
+        mapDataModel.pointsOfInterest.forEach((poi) => {
+          const p = project(poi.lat, poi.lng);
+          const marker = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          marker.setAttribute("x", String(p.x - 4));
+          marker.setAttribute("y", String(p.y - 4));
+          marker.setAttribute("width", "8");
+          marker.setAttribute("height", "8");
+          marker.setAttribute("fill", "#111827");
+          const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+          title.textContent = `${poi.name} (${poi.category})`;
+          marker.appendChild(title);
+          svg.appendChild(marker);
+        });
+
+        mapEl.appendChild(svg);
+      }
+    </script>
+  </body>
+</html>
