@@ -99,10 +99,10 @@
       crossorigin=""
     ></script>
     <script>
-      const encodedTemplateData = "<?= mapDataEncoded ?>";
+      const mapDataTemplate = "<?= mapDataEncoded ?>";
       const serverMapData =
-        encodedTemplateData && !encodedTemplateData.includes("<?")
-          ? decodeURIComponent(encodedTemplateData)
+        mapDataTemplate && !mapDataTemplate.includes("<?")
+          ? decodeURIComponent(mapDataTemplate)
           : null;
       const fallbackMapData = {
         lines: [

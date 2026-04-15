@@ -9,9 +9,9 @@ Google Apps Script app with:
 
 ## Files
 
-- `/home/runner/work/JLTA/JLTA/Code.gs` - Apps Script backend logic
-- `/home/runner/work/JLTA/JLTA/Index.html` - mobile web UI + map rendering
-- `/home/runner/work/JLTA/JLTA/appsscript.json` - Apps Script manifest
+- `Code.gs` - Apps Script backend logic
+- `Index.html` - mobile web UI + map rendering
+- `appsscript.json` - Apps Script manifest
 
 ## How to use
 

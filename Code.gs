@@ -59,10 +59,10 @@ function syncMetroDataToSheets() {
     ["poi_count", String(poiRows.length)]
   ];
 
-  clearAndWriteRows_(linesSheet, lineRows, 3);
-  clearAndWriteRows_(stationsSheet, stationRows, 5);
-  clearAndWriteRows_(poiSheet, poiRows, 4);
-  clearAndWriteRows_(configSheet, configRows, 2);
+  clearAndWriteRows(linesSheet, lineRows, 3);
+  clearAndWriteRows(stationsSheet, stationRows, 5);
+  clearAndWriteRows(poiSheet, poiRows, 4);
+  clearAndWriteRows(configSheet, configRows, 2);
 }
 
 function getMetroData() {
@@ -171,11 +171,7 @@ function getMetroData() {
   };
 }
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
-function clearAndWriteRows_(sheet, rows, width) {
+function clearAndWriteRows(sheet, rows, width) {
   if (sheet.getLastRow() > 1) {
     sheet.getRange(2, 1, sheet.getLastRow() - 1, width).clearContent();
   }
