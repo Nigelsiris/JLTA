@@ -172,6 +172,7 @@ function getMetroData() {
 }
 
 function clearAndWriteRows(sheet, rows, width) {
+  // Always preserve row 1 headers; clear only data rows below them.
   if (sheet.getLastRow() > 1) {
     sheet.getRange(2, 1, sheet.getLastRow() - 1, width).clearContent();
   }

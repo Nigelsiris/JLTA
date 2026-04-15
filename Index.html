@@ -99,10 +99,11 @@
       crossorigin=""
     ></script>
     <script>
-      const mapDataTemplate = "<?= mapDataEncoded ?>";
+      const encodedMapData = "<?= mapDataEncoded ?>";
       const serverMapData =
-        mapDataTemplate && !mapDataTemplate.includes("<?")
-          ? decodeURIComponent(mapDataTemplate)
+        // In local/static previews, Apps Script template tags are not rendered and still contain "<?".
+        encodedMapData && !encodedMapData.includes("<?")
+          ? decodeURIComponent(encodedMapData)
           : null;
       const fallbackMapData = {
         lines: [
