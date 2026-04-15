@@ -99,11 +99,11 @@
       crossorigin=""
     ></script>
     <script>
-      const encodedMapData = "<?= mapDataEncoded ?>";
+      const serverMapDataTemplate = "<?= mapDataEncoded ?>";
       const serverMapData =
         // In local/static previews, Apps Script template tags are not rendered and still contain "<?".
-        encodedMapData && !encodedMapData.includes("<?")
-          ? decodeURIComponent(encodedMapData)
+        serverMapDataTemplate && !serverMapDataTemplate.includes("<?")
+          ? decodeURIComponent(serverMapDataTemplate)
           : null;
       const fallbackMapData = {
         lines: [
@@ -208,9 +208,14 @@
         const minLng = Math.min(...lngs);
         const maxLng = Math.max(...lngs);
 
+        const SVG_LEFT_PADDING = 50;
+        const SVG_BOTTOM = 650;
+        const SVG_DRAW_WIDTH = 900;
+        const SVG_DRAW_HEIGHT = 600;
+
         const project = (lat, lng) => ({
-          x: 50 + ((lng - minLng) / (maxLng - minLng || 1)) * 900,
-          y: 650 - ((lat - minLat) / (maxLat - minLat || 1)) * 600
+          x: SVG_LEFT_PADDING + ((lng - minLng) / (maxLng - minLng || 1)) * SVG_DRAW_WIDTH,
+          y: SVG_BOTTOM - ((lat - minLat) / (maxLat - minLat || 1)) * SVG_DRAW_HEIGHT
         });
 
         mapDataModel.lines.forEach((line) => {

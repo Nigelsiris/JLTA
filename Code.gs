@@ -38,7 +38,13 @@ function syncMetroDataToSheets() {
   const configSheet = spreadsheet.getSheetByName("Config");
 
   if (!linesSheet || !stationsSheet || !poiSheet || !configSheet) {
-    throw new Error("Run initializeSpreadsheet() first to create the required sheets.");
+    const missingSheets = [
+      !linesSheet && "Lines",
+      !stationsSheet && "Stations",
+      !poiSheet && "PointsOfInterest",
+      !configSheet && "Config"
+    ].filter(Boolean);
+    throw new Error(`Run initializeSpreadsheet() first. Missing sheets: ${missingSheets.join(", ")}.`);
   }
 
   const lineRows = data.lines.map((line) => [line.name, line.color, line.stations.length]);
@@ -171,15 +177,15 @@ function getMetroData() {
   };
 }
 
-function clearAndWriteRows(sheet, rows, width) {
+function clearAndWriteRows(sheet, rows, columnCount) {
   // Always preserve row 1 headers; clear only data rows below them.
   if (sheet.getLastRow() > 1) {
-    sheet.getRange(2, 1, sheet.getLastRow() - 1, width).clearContent();
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, columnCount).clearContent();
   }
 
   if (!rows.length) {
     return;
   }
 
-  sheet.getRange(2, 1, rows.length, width).setValues(rows);
+  sheet.getRange(2, 1, rows.length, columnCount).setValues(rows);
 }
